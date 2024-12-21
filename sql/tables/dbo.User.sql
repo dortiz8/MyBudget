@@ -1,0 +1,20 @@
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[User](
+	[UserId] [int] IDENTITY(1,1) NOT NULL,
+	[FName] [varchar](50) NOT NULL,
+	[LName] [varchar](50) NOT NULL,
+	[Email] [varchar](50) NOT NULL,
+	[DateAdded] [datetime] NOT NULL,
+	[UpdatedDate] [datetime] NULL
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[User] ADD  CONSTRAINT [PK_User] PRIMARY KEY CLUSTERED 
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[User] ADD  CONSTRAINT [DEFAULT_User_DateAdded]  DEFAULT (getdate()) FOR [DateAdded]
+GO

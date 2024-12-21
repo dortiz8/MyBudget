@@ -1,0 +1,21 @@
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Payments](
+	[PaymentsId] [int] IDENTITY(1,1) NOT NULL,
+	[PaymentId] [int] NOT NULL,
+	[DatePaid] [datetime] NOT NULL,
+	[Memo] [varchar](50) NULL
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Payments] ADD  CONSTRAINT [PK_PaymentsId] PRIMARY KEY CLUSTERED 
+(
+	[PaymentsId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Payments]  WITH CHECK ADD  CONSTRAINT [FK_Payments_PaymentId] FOREIGN KEY([PaymentId])
+REFERENCES [dbo].[Payment] ([PaymentId])
+GO
+ALTER TABLE [dbo].[Payments] CHECK CONSTRAINT [FK_Payments_PaymentId]
+GO

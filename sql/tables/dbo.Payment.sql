@@ -1,0 +1,23 @@
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Payment](
+	[PaymentId] [int] IDENTITY(1,1) NOT NULL,
+	[Amount] [decimal](18, 2) NOT NULL,
+	[DateAdded] [datetime] NOT NULL,
+	[BillCycleId] [int] NOT NULL
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Payment] ADD  CONSTRAINT [PK_PaymentId] PRIMARY KEY CLUSTERED 
+(
+	[PaymentId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Payment] ADD  CONSTRAINT [DEFAULT_Payment_DateAdded]  DEFAULT (getdate()) FOR [DateAdded]
+GO
+ALTER TABLE [dbo].[Payment]  WITH CHECK ADD  CONSTRAINT [FK_Payment_BillCycleId] FOREIGN KEY([BillCycleId])
+REFERENCES [dbo].[BillCycle] ([BillCycleId])
+GO
+ALTER TABLE [dbo].[Payment] CHECK CONSTRAINT [FK_Payment_BillCycleId]
+GO

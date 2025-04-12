@@ -4,28 +4,55 @@ using Dapper;
 
 public static class DbUtils{
     public static async Task<IEnumerable<T>> GetListOfitem<T>(IDbConnection dbConnection,  string storedProcedureName, object parameters = null) where T : class{
+
+        DynamicParameters dynamicParameters = GetDynamicParameters(parameters);
+
         return await dbConnection.QueryAsync<T>(
                     storedProcedureName,
-                    parameters,
+                    dynamicParameters,
                     commandType: CommandType.StoredProcedure
                 );
     }
 
     public static async Task<T> GetItem<T>(IDbConnection dbConnection, string storedProcedureName, object parameters = null) where T : class
     {
-       
-            var dynamicParameters = new DynamicParameters();
-            dynamicParameters.Add("@Id", parameters, DbType.Int32, ParameterDirection.Input);
-
-            var item = await dbConnection.QueryFirstOrDefaultAsync<T>(
+        DynamicParameters dynamicParameters = GetDynamicParameters(parameters);
+        var item = await dbConnection.QueryFirstOrDefaultAsync<T>(
                         storedProcedureName,
                         dynamicParameters,
                         commandType: CommandType.StoredProcedure
                     );
-            return item; 
+        return item;
     }
 
-     public static async Task<bool> UpdateItemByType<T>(IDbConnection dbConnection, string storedProcedureName, T item, string inputTableName, string tableValueName )
+    private static DynamicParameters GetDynamicParameters(object parameters, bool returnValue = false)
+    {
+        var dynamicParameters = new DynamicParameters();
+        if (parameters != null)
+        {
+            Type paramType = parameters.GetType();
+            PropertyInfo userIdProperty = paramType.GetProperty("UserId");
+            PropertyInfo Id = paramType.GetProperty("Id");
+
+
+            if (userIdProperty != null && Id != null)
+            {
+                var userIdValue = userIdProperty.GetValue(parameters);
+                dynamicParameters.Add("@UserId", userIdValue, DbType.Int32, ParameterDirection.Input);
+                var idValue = Id.GetValue(parameters);
+                dynamicParameters.Add("@Id", idValue, DbType.Int32, ParameterDirection.Input);
+            }
+
+            if (returnValue)
+            {
+                dynamicParameters.Add("ReturnValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+            }
+        }
+
+        return dynamicParameters;
+    }
+
+    public static async Task<bool> UpdateItemByType<T>(IDbConnection dbConnection, string storedProcedureName, T item, string inputTableName, string tableValueName )
     {
        var dataTable = ConvertToDataTable<T>(item);
 
@@ -42,16 +69,30 @@ public static class DbUtils{
 
     }
 
-    public static async Task<bool> DeleteItem(IDbConnection dbConnection, string storedProcedureName, int id)
+    public static async Task<bool> DeleteItem(IDbConnection dbConnection, string storedProcedureName, object parameters = null)
     {
-        var dynamicParameters = new DynamicParameters();
-        dynamicParameters.Add("@Id", id, DbType.Int32, ParameterDirection.Input);
-        dynamicParameters.Add("ReturnValue", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+        DynamicParameters dynamicParameters = GetDynamicParameters(parameters, true);
         await dbConnection.ExecuteAsync(
                     storedProcedureName,
                     dynamicParameters,
                     commandType: CommandType.StoredProcedure
                 );
+        int result = dynamicParameters.Get<int>("ReturnValue");
+        if (result == 0) Console.WriteLine("Update ran successfully but no lines were updated");
+        return result == -1 ? false : true;
+    }
+
+    public static async Task<bool> AddItemByType<T>(IDbConnection dbConnection, string storedProcedureName, T item, string inputTableName, string tableValueName)
+    {
+        var dataTable = ConvertToDataTable<T>(item);
+
+        DynamicParameters dynamicParameters = SetDynamicParameters(dataTable, inputTableName, tableValueName);
+
+        await dbConnection.ExecuteAsync(
+                   storedProcedureName,
+                   dynamicParameters,
+                   commandType: CommandType.StoredProcedure
+               );
         int result = dynamicParameters.Get<int>("ReturnValue");
         if (result == 0) Console.WriteLine("Update ran successfully but no lines were updated");
         return result == -1 ? false : true;
